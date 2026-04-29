@@ -255,11 +255,29 @@ function Features() {
 }
 
 function LoadingState() {
+  const dots = ["bg-blush", "bg-lavender", "bg-mint", "bg-peach", "bg-primary/70"];
   return (
-    <div className="mt-10 flex flex-col items-center gap-3 rounded-2xl border border-border/60 bg-card/70 p-10 text-center shadow-soft backdrop-blur">
-      <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      <p className="font-medium">Crafting your PM breakdown…</p>
-      <p className="text-sm text-muted-foreground">This usually takes 5–15 seconds.</p>
+    <div className="mt-10 flex flex-col items-center gap-5 rounded-2xl border border-border/60 bg-card/70 p-10 text-center shadow-soft backdrop-blur">
+      <div className="relative flex h-16 w-16 items-center justify-center">
+        <span className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
+        <span className="absolute inset-2 rounded-full bg-gradient-primary opacity-80 blur-md" />
+        <span className="relative flex h-10 w-10 items-center justify-center rounded-full bg-gradient-primary shadow-glow">
+          <Sparkles className="h-5 w-5 text-primary-foreground" />
+        </span>
+      </div>
+      <div className="space-y-1">
+        <p className="font-display text-lg font-semibold">Crafting your PM breakdown…</p>
+        <p className="text-sm text-muted-foreground">Sprinkling some pink magic ✨ — usually 5–15 seconds.</p>
+      </div>
+      <div className="flex items-center gap-2">
+        {dots.map((c, i) => (
+          <span
+            key={i}
+            className={`h-2.5 w-2.5 rounded-full ${c} animate-bounce`}
+            style={{ animationDelay: `${i * 120}ms`, animationDuration: "900ms" }}
+          />
+        ))}
+      </div>
     </div>
   );
 }
