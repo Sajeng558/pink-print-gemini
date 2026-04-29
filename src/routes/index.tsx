@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Sparkles, FileText, Users, CheckCircle2, Ticket, ArrowRight, Loader2, Copy, Wand2, Heart } from "lucide-react";
+import { Sparkles, FileText, Users, CheckCircle2, Ticket, ArrowRight, Loader2, Copy, Wand2, Heart, Upload, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { toast, Toaster } from "sonner";
 import { generateBreakdown, type GenerateResult } from "@/server/generate.functions";
+import { parseFile } from "@/lib/file-parse";
+import { exportPdf } from "@/lib/pdf-export";
 
 export const Route = createFileRoute("/")({
   head: () => ({
