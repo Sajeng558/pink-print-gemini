@@ -1,93 +1,93 @@
-🩷 PinkPrint
+# 🩷 PinkPrint
 
 Transform messy meeting notes into structured product documentation in seconds.
 
-🔗 Live Demo: https://pink-print-gemini.vercel.app/
+👉 Live Demo: https://pink-print-gemini.vercel.app/
 
-🚀 Overview
+---
 
-PinkPrint is an AI-powered product assistant that converts unstructured meeting notes, transcripts, and raw ideas into clean, actionable product documentation.
+## 🚀 Overview
 
-It helps product managers move from chaos → clarity by automatically generating structured PRDs and execution-ready outputs.
+PinkPrint is an AI-powered product assistant that converts unstructured inputs like meeting notes, stakeholder discussions, and brainstorming docs into clean, actionable product documentation.
 
-✨ Problem
+It helps product managers move from **chaos → clarity** by instantly generating structured PRDs and execution-ready artifacts.
 
-Product teams lose significant time translating messy inputs like:
+---
 
-meeting notes
-stakeholder discussions
-raw brainstorming docs
+## 💡 Problem
 
-into structured artifacts like PRDs, user stories, and Jira tickets.
+I found myself spending too much time manually translating messy inputs into structured outputs, such as:
+- Product Requirements Documents (PRDs)
+- User stories
+- Jira tickets
+- Execution plans
 
-This manual process is:
+---
 
-time-consuming
-inconsistent across teams
-prone to missed requirements
-💡 Solution
+## ✨ Solution
 
-PinkPrint uses AI to instantly transform unstructured input into:
+PinkPrint uses AI to automatically transform raw inputs into structured product documentation:
 
-Product Requirements Documents (PRDs)
-User Stories (As a / I want / So that format)
-Acceptance Criteria (clear and testable)
-Jira-ready engineering tickets
-Recommended next steps for execution
-🧠 Key Features
-📝 Paste or upload meeting notes/files
-⚡ AI-powered document generation
-📄 Structured PRD creation
-👤 User story generation in standard format
-✅ Acceptance criteria builder
-🧩 Jira ticket formatting for engineering teams
-🚀 Next-step recommendations for product execution
-🛠 Tech Stack
-Frontend: React (Vite-based SPA)
-AI Layer: Google AI Studio (Gemini API via Lovable AI Gateway)
-Deployment: Vercel
-Repo Hosting: GitHub
+- 📄 Product Requirements Document (PRD) summary
+- 👤 User stories (As a / I want / So that format)
+- ✅ Acceptance criteria
+- 🧩 Jira-ready tickets
+- 🚀 Recommended next steps
 
-Built using a rapid AI-assisted development workflow via Lovable and deployed on Vercel.
+---
 
-🧩 AI Architecture
+## 🧠 Key Features
 
-PinkPrint uses a prompt-driven AI workflow:
+- 📝 Paste or upload meeting notes
+- 📂 File upload support (notes, docs, transcripts)
+- ⚡ AI-powered document generation
+- 📄 Structured PRD creation
+- 👤 User story generation
+- ✅ Acceptance criteria generation
+- 🧩 Jira ticket formatting
+- 🚀 Product execution recommendations
 
-Input → AI Processing → Structured Output
+---
 
-User inputs raw notes or uploads a file
-Text is processed and sent to Gemini via AI Gateway
-AI returns structured product artifacts
-UI organizes outputs into clear sections for easy copy/export
-📸 Example Output Structure
-PRD Summary
-User Stories
-Acceptance Criteria
-Jira Tickets
-Next Steps
-🧪 How to Run Locally
-git clone <your-repo-url>
-cd pinkprint
-npm install
-npm run dev
-🌐 Live App
+## 🛠 Tech Stack
+
+- Frontend: React (Vite-based SPA)
+- AI Layer: Google Gemini API (via Lovable AI Gateway)
+- Deployment: Vercel
+- Repo Hosting: GitHub
+
+Built using an AI-assisted development workflow via Lovable.
+
+---
+
+## 🧩 How It Works
+
+1. User inputs or uploads messy meeting notes
+2. AI processes and extracts key product signals
+3. System generates structured outputs:
+   - PRD summary
+   - User stories
+   - Acceptance criteria
+   - Jira tickets
+   - Next steps
+4. Results are displayed in clean, copy-ready sections
+
+---
+
+## 🌐 Live App
 
 👉 https://pink-print-gemini.vercel.app/
 
-📈 Future Improvements
-Export to Notion / Confluence
-Jira API integration (auto-ticket creation)
-Multi-user collaboration
-Saved PRD history
-Prompt customization per company style
-AI evaluation scoring for PRDs
-👩‍💻 Why I Built This
+---
 
-PinkPrint was built to explore how AI can compress core product management workflows — especially transforming unstructured human communication into structured execution artifacts.
+## 👩‍💻 Why I Built This
 
-It demonstrates how AI can act as a product operations multiplier, not just a chatbot.
+PinkPrint was built to explore how AI can streamline core product management workflows by transforming unstructured communication into structured execution artifacts.
 
-📌 Status
+It demonstrates how AI can act as a **product operations multiplier** for modern product teams.
 
-MVP complete — actively iterating on UX and AI output quality.
+---
+
+## 📌 Status
+
+MVP complete — actively improving UX, AI output quality, and workflow depth.
