@@ -13,13 +13,13 @@ import { generateBreakdown, type GenerateResult } from "@/server/generate.functi
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "PM Ticket Helper — Meeting notes to PRD, stories & Jira tickets" },
+      { title: "PinkPrint — AI PM Documentation Generator" },
       {
         name: "description",
         content:
           "Paste meeting notes or transcripts and instantly get a PRD summary, user stories, acceptance criteria, Jira tickets and next steps.",
       },
-      { property: "og:title", content: "PM Ticket Helper" },
+      { property: "og:title", content: "PinkPrint" },
       {
         property: "og:description",
         content: "Turn messy meeting notes into a clean product breakdown in seconds.",
@@ -149,8 +149,8 @@ function Header() {
           <Heart className="h-4 w-4 text-primary-foreground" fill="currentColor" />
         </div>
         <div className="leading-tight">
-          <div className="font-display text-lg font-semibold">PM Ticket Helper</div>
-          <div className="text-xs text-muted-foreground">Notes → tickets in seconds</div>
+          <div className="font-display text-lg font-semibold">PinkPrint</div>
+          <div className="text-xs text-muted-foreground">AI PM Documentation Generator</div>
         </div>
       </div>
       <Badge variant="secondary" className="hidden bg-accent text-accent-foreground sm:inline-flex">
