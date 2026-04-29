@@ -43,7 +43,31 @@ function Index() {
   const generate = useServerFn(generateBreakdown);
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
+  const [parsing, setParsing] = useState(false);
   const [result, setResult] = useState<GenerateResult | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const onPickFile = () => fileInputRef.current?.click();
+
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setParsing(true);
+    try {
+      const text = await parseFile(file);
+      if (!text || text.trim().length === 0) {
+        toast.error("Couldn't extract any text from that file.");
+      } else {
+        setNotes(text);
+        toast.success(`Loaded ${file.name}`);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to read file.");
+    } finally {
+      setParsing(false);
+    }
+  };
 
   const onGenerate = async () => {
     if (notes.trim().length < 20) {
