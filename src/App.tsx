@@ -1,35 +1,42 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useRef, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
-import { Sparkles, FileText, Users, CheckCircle2, Ticket, ArrowRight, Loader2, Copy, Wand2, Heart, Upload, Download } from "lucide-react";
+import { useRef, useState, useEffect } from "react";
+import {
+  Sparkles,
+  FileText,
+  Users,
+  CheckCircle2,
+  Ticket,
+  ArrowRight,
+  Loader2,
+  Copy,
+  Wand2,
+  Heart,
+  Upload,
+  Download,
+  KeyRound,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast, Toaster } from "sonner";
-import { generateBreakdown, type GenerateResult } from "@/server/generate.functions";
+import {
+  generateBreakdown,
+  getStoredKey,
+  setStoredKey,
+  type GenerateResult,
+} from "@/lib/gemini";
 import { parseFile } from "@/lib/file-parse";
 import { exportPdf } from "@/lib/pdf-export";
-
-export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "PinkPrint — AI PM Documentation Generator" },
-      {
-        name: "description",
-        content:
-          "Paste meeting notes or transcripts and instantly get a PRD summary, user stories, acceptance criteria, Jira tickets and next steps.",
-      },
-      { property: "og:title", content: "PinkPrint" },
-      {
-        property: "og:description",
-        content: "Turn messy meeting notes into a clean product breakdown in seconds.",
-      },
-    ],
-  }),
-  component: Index,
-});
 
 const SAMPLE = `Sync about the new onboarding flow.
 - Users drop off after signup, mostly on the workspace creation step
@@ -39,13 +46,20 @@ const SAMPLE = `Sync about the new onboarding flow.
 - Should send a welcome email after step 2
 - Goal: lift activation by 15% in Q3`;
 
-function Index() {
-  const generate = useServerFn(generateBreakdown);
+export default function App() {
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [parsing, setParsing] = useState(false);
   const [result, setResult] = useState<GenerateResult | null>(null);
+  const [keyOpen, setKeyOpen] = useState(false);
+  const [keyInput, setKeyInput] = useState("");
+  const [hasKey, setHasKey] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const envKey = (import.meta.env.VITE_GEMINI_API_KEY as string | undefined) || "";
+    setHasKey(Boolean(envKey || getStoredKey()));
+  }, []);
 
   const onPickFile = () => fileInputRef.current?.click();
 
@@ -69,15 +83,32 @@ function Index() {
     }
   };
 
+  const openKeyDialog = () => {
+    setKeyInput(getStoredKey());
+    setKeyOpen(true);
+  };
+
+  const saveKey = () => {
+    setStoredKey(keyInput.trim());
+    setHasKey(Boolean(keyInput.trim()) || Boolean(import.meta.env.VITE_GEMINI_API_KEY));
+    setKeyOpen(false);
+    toast.success(keyInput.trim() ? "API key saved" : "API key cleared");
+  };
+
   const onGenerate = async () => {
     if (notes.trim().length < 20) {
       toast.error("Please paste at least 20 characters of notes.");
       return;
     }
+    if (!hasKey) {
+      toast.error("Add your Gemini API key first.");
+      openKeyDialog();
+      return;
+    }
     setLoading(true);
     setResult(null);
     try {
-      const r = await generate({ data: { notes } });
+      const r = await generateBreakdown(notes);
       setResult(r);
       toast.success("Your PM breakdown is ready ✨");
       setTimeout(() => {
@@ -94,7 +125,7 @@ function Index() {
   return (
     <div className="min-h-screen bg-hero">
       <Toaster position="top-center" richColors />
-      <Header />
+      <Header onOpenKey={openKeyDialog} hasKey={hasKey} />
 
       <main className="mx-auto max-w-5xl px-5 pb-24 pt-10 sm:pt-16">
         <Hero />
@@ -191,11 +222,46 @@ function Index() {
       </main>
 
       <Footer />
+
+      <Dialog open={keyOpen} onOpenChange={setKeyOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Gemini API key</DialogTitle>
+            <DialogDescription>
+              Stored only in your browser (localStorage). Get a key at{" "}
+              <a
+                href="https://aistudio.google.com/app/apikey"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary underline"
+              >
+                aistudio.google.com
+              </a>
+              .
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            type="password"
+            value={keyInput}
+            onChange={(e) => setKeyInput(e.target.value)}
+            placeholder="AIza..."
+            autoFocus
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setKeyOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={saveKey} className="bg-gradient-primary text-primary-foreground">
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-function Header() {
+function Header({ onOpenKey, hasKey }: { onOpenKey: () => void; hasKey: boolean }) {
   return (
     <header className="mx-auto flex max-w-5xl items-center justify-between px-5 pt-6">
       <div className="flex items-center gap-2">
@@ -207,9 +273,15 @@ function Header() {
           <div className="text-xs text-muted-foreground">AI PM Documentation Generator</div>
         </div>
       </div>
-      <Badge variant="secondary" className="hidden bg-accent text-accent-foreground sm:inline-flex">
-        <Sparkles className="mr-1 h-3 w-3" /> AI-powered
-      </Badge>
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" size="sm" onClick={onOpenKey} className="text-muted-foreground">
+          <KeyRound className="mr-1.5 h-4 w-4" />
+          {hasKey ? "API key" : "Add key"}
+        </Button>
+        <Badge variant="secondary" className="hidden bg-accent text-accent-foreground sm:inline-flex">
+          <Sparkles className="mr-1 h-3 w-3" /> Gemini
+        </Badge>
+      </div>
     </header>
   );
 }
@@ -285,7 +357,7 @@ function LoadingState() {
 function copy(text: string) {
   navigator.clipboard.writeText(text).then(
     () => toast.success("Copied to clipboard"),
-    () => toast.error("Couldn't copy")
+    () => toast.error("Couldn't copy"),
   );
 }
 
@@ -293,29 +365,33 @@ function Results({ data }: { data: GenerateResult }) {
   const allText = formatAll(data);
 
   const exportAll = () => {
-    exportPdf("PinkPrint — PM Breakdown", [
-      { heading: "PRD Summary", lines: [data.prd_summary] },
-      {
-        heading: "User Stories",
-        lines: data.user_stories.map((s) => `• ${s.title} — ${s.story}`),
-      },
-      {
-        heading: "Acceptance Criteria",
-        lines: data.acceptance_criteria.map((c) => `• ${c}`),
-      },
-      {
-        heading: "Jira Tickets",
-        lines: data.jira_tickets.flatMap((t) => [
-          `[${t.key}] (${t.type}, ${t.priority}) ${t.summary}`,
-          t.description,
-          "",
-        ]),
-      },
-      {
-        heading: "Recommended Next Steps",
-        lines: data.next_steps.map((s, i) => `${i + 1}. ${s}`),
-      },
-    ], "pinkprint-breakdown.pdf");
+    exportPdf(
+      "PinkPrint — PM Breakdown",
+      [
+        { heading: "PRD Summary", lines: [data.prd_summary] },
+        {
+          heading: "User Stories",
+          lines: data.user_stories.map((s) => `• ${s.title} — ${s.story}`),
+        },
+        {
+          heading: "Acceptance Criteria",
+          lines: data.acceptance_criteria.map((c) => `• ${c}`),
+        },
+        {
+          heading: "Jira Tickets",
+          lines: data.jira_tickets.flatMap((t) => [
+            `[${t.key}] (${t.type}, ${t.priority}) ${t.summary}`,
+            t.description,
+            "",
+          ]),
+        },
+        {
+          heading: "Recommended Next Steps",
+          lines: data.next_steps.map((s, i) => `${i + 1}. ${s}`),
+        },
+      ],
+      "pinkprint-breakdown.pdf",
+    );
     toast.success("PDF exported");
   };
 
@@ -387,7 +463,7 @@ function Results({ data }: { data: GenerateResult }) {
                 exportSection(
                   "Acceptance Criteria",
                   data.acceptance_criteria.map((c) => `• ${c}`),
-                  "pinkprint-acceptance-criteria.pdf"
+                  "pinkprint-acceptance-criteria.pdf",
                 )
               }
             >
@@ -414,7 +490,7 @@ function Results({ data }: { data: GenerateResult }) {
                   exportSection(
                     `${t.key} — ${t.summary}`,
                     [`Type: ${t.type}`, `Priority: ${t.priority}`, "", t.description],
-                    `pinkprint-${t.key.toLowerCase()}.pdf`
+                    `pinkprint-${t.key.toLowerCase()}.pdf`,
                   )
                 }
               >
@@ -440,7 +516,7 @@ function Results({ data }: { data: GenerateResult }) {
                 exportSection(
                   "Recommended Next Steps",
                   data.next_steps.map((s, i) => `${i + 1}. ${s}`),
-                  "pinkprint-next-steps.pdf"
+                  "pinkprint-next-steps.pdf",
                 )
               }
             >
@@ -500,7 +576,7 @@ function formatAll(d: GenerateResult): string {
   d.acceptance_criteria.forEach((c) => lines.push(`- ${c}`));
   lines.push("", "# Jira Tickets");
   d.jira_tickets.forEach((t) =>
-    lines.push(`- [${t.key}] (${t.type}, ${t.priority}) ${t.summary}\n  ${t.description}`)
+    lines.push(`- [${t.key}] (${t.type}, ${t.priority}) ${t.summary}\n  ${t.description}`),
   );
   lines.push("", "# Next Steps");
   d.next_steps.forEach((s, i) => lines.push(`${i + 1}. ${s}`));
