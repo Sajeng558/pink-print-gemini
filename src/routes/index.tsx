@@ -291,16 +291,58 @@ function copy(text: string) {
 
 function Results({ data }: { data: GenerateResult }) {
   const allText = formatAll(data);
+
+  const exportAll = () => {
+    exportPdf("PinkPrint — PM Breakdown", [
+      { heading: "PRD Summary", lines: [data.prd_summary] },
+      {
+        heading: "User Stories",
+        lines: data.user_stories.map((s) => `• ${s.title} — ${s.story}`),
+      },
+      {
+        heading: "Acceptance Criteria",
+        lines: data.acceptance_criteria.map((c) => `• ${c}`),
+      },
+      {
+        heading: "Jira Tickets",
+        lines: data.jira_tickets.flatMap((t) => [
+          `[${t.key}] (${t.type}, ${t.priority}) ${t.summary}`,
+          t.description,
+          "",
+        ]),
+      },
+      {
+        heading: "Recommended Next Steps",
+        lines: data.next_steps.map((s, i) => `${i + 1}. ${s}`),
+      },
+    ], "pinkprint-breakdown.pdf");
+    toast.success("PDF exported");
+  };
+
+  const exportSection = (heading: string, lines: string[], filename: string) => {
+    exportPdf(`PinkPrint — ${heading}`, [{ heading, lines }], filename);
+    toast.success("PDF exported");
+  };
+
   return (
     <Card className="border-border/60 bg-card/85 shadow-glow backdrop-blur">
       <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
         <div>
           <CardTitle className="font-display text-2xl">Your PM breakdown</CardTitle>
-          <CardDescription>Review, copy and paste straight into your tools.</CardDescription>
+          <CardDescription>Review, copy, or export to PDF.</CardDescription>
         </div>
-        <Button variant="outline" size="sm" onClick={() => copy(allText)}>
-          <Copy className="mr-2 h-4 w-4" /> Copy all
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => copy(allText)}>
+            <Copy className="mr-2 h-4 w-4" /> Copy all
+          </Button>
+          <Button
+            size="sm"
+            onClick={exportAll}
+            className="bg-gradient-primary text-primary-foreground shadow-soft"
+          >
+            <Download className="mr-2 h-4 w-4" /> Export PDF
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="prd" className="w-full">
@@ -313,14 +355,25 @@ function Results({ data }: { data: GenerateResult }) {
           </TabsList>
 
           <TabsContent value="prd" className="mt-6">
-            <Section title="PRD Summary" onCopy={() => copy(data.prd_summary)}>
+            <Section
+              title="PRD Summary"
+              onCopy={() => copy(data.prd_summary)}
+              onExport={() => exportSection("PRD Summary", [data.prd_summary], "pinkprint-prd.pdf")}
+            >
               <p className="whitespace-pre-wrap leading-relaxed text-foreground/90">{data.prd_summary}</p>
             </Section>
           </TabsContent>
 
           <TabsContent value="stories" className="mt-6 space-y-3">
             {data.user_stories.map((s, i) => (
-              <Section key={i} title={s.title} onCopy={() => copy(`${s.title}\n${s.story}`)}>
+              <Section
+                key={i}
+                title={s.title}
+                onCopy={() => copy(`${s.title}\n${s.story}`)}
+                onExport={() =>
+                  exportSection(s.title, [s.story], `pinkprint-story-${i + 1}.pdf`)
+                }
+              >
                 <p className="leading-relaxed text-foreground/90">{s.story}</p>
               </Section>
             ))}
@@ -330,6 +383,13 @@ function Results({ data }: { data: GenerateResult }) {
             <Section
               title="Acceptance Criteria"
               onCopy={() => copy(data.acceptance_criteria.map((c) => `• ${c}`).join("\n"))}
+              onExport={() =>
+                exportSection(
+                  "Acceptance Criteria",
+                  data.acceptance_criteria.map((c) => `• ${c}`),
+                  "pinkprint-acceptance-criteria.pdf"
+                )
+              }
             >
               <ul className="space-y-2">
                 {data.acceptance_criteria.map((c, i) => (
@@ -350,6 +410,13 @@ function Results({ data }: { data: GenerateResult }) {
                 onCopy={() =>
                   copy(`[${t.key}] (${t.type}, ${t.priority}) ${t.summary}\n\n${t.description}`)
                 }
+                onExport={() =>
+                  exportSection(
+                    `${t.key} — ${t.summary}`,
+                    [`Type: ${t.type}`, `Priority: ${t.priority}`, "", t.description],
+                    `pinkprint-${t.key.toLowerCase()}.pdf`
+                  )
+                }
               >
                 <div className="mb-3 flex flex-wrap items-center gap-2">
                   <Badge className="bg-primary/15 text-primary hover:bg-primary/20">{t.type}</Badge>
@@ -369,6 +436,13 @@ function Results({ data }: { data: GenerateResult }) {
             <Section
               title="Recommended Next Steps"
               onCopy={() => copy(data.next_steps.map((s, i) => `${i + 1}. ${s}`).join("\n"))}
+              onExport={() =>
+                exportSection(
+                  "Recommended Next Steps",
+                  data.next_steps.map((s, i) => `${i + 1}. ${s}`),
+                  "pinkprint-next-steps.pdf"
+                )
+              }
             >
               <ol className="space-y-2">
                 {data.next_steps.map((s, i) => (
@@ -392,18 +466,25 @@ function Section({
   title,
   children,
   onCopy,
+  onExport,
 }: {
   title: string;
   children: React.ReactNode;
   onCopy: () => void;
+  onExport: () => void;
 }) {
   return (
     <div className="rounded-xl border border-border/60 bg-background/60 p-5">
       <div className="mb-3 flex items-start justify-between gap-3">
         <h3 className="font-display text-lg font-semibold">{title}</h3>
-        <Button variant="ghost" size="sm" onClick={onCopy} className="text-muted-foreground hover:text-foreground">
-          <Copy className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" onClick={onCopy} className="text-muted-foreground hover:text-foreground" title="Copy">
+            <Copy className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={onExport} className="text-muted-foreground hover:text-foreground" title="Export PDF">
+            <Download className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
       {children}
     </div>
