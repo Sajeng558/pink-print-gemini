@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Sparkles, FileText, Users, CheckCircle2, Ticket, ArrowRight, Loader2, Copy, Wand2, Heart } from "lucide-react";
+import { Sparkles, FileText, Users, CheckCircle2, Ticket, ArrowRight, Loader2, Copy, Wand2, Heart, Upload, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { toast, Toaster } from "sonner";
 import { generateBreakdown, type GenerateResult } from "@/server/generate.functions";
+import { parseFile } from "@/lib/file-parse";
+import { exportPdf } from "@/lib/pdf-export";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -41,7 +43,31 @@ function Index() {
   const generate = useServerFn(generateBreakdown);
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
+  const [parsing, setParsing] = useState(false);
   const [result, setResult] = useState<GenerateResult | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const onPickFile = () => fileInputRef.current?.click();
+
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setParsing(true);
+    try {
+      const text = await parseFile(file);
+      if (!text || text.trim().length === 0) {
+        toast.error("Couldn't extract any text from that file.");
+      } else {
+        setNotes(text);
+        toast.success(`Loaded ${file.name}`);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to read file.");
+    } finally {
+      setParsing(false);
+    }
+  };
 
   const onGenerate = async () => {
     if (notes.trim().length < 20) {
@@ -91,8 +117,15 @@ function Index() {
               className="min-h-56 resize-y bg-background/70 text-base leading-relaxed"
               maxLength={20000}
             />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".txt,.md,.csv,.log,.doc,.docx,.pdf,text/plain,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              className="hidden"
+              onChange={onFileChange}
+            />
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 <span>{notes.length.toLocaleString()} / 20,000</span>
                 <span>·</span>
                 <button
@@ -103,24 +136,45 @@ function Index() {
                   Try a sample
                 </button>
               </div>
-              <Button
-                size="lg"
-                onClick={onGenerate}
-                disabled={loading}
-                className="bg-gradient-primary text-primary-foreground shadow-soft transition-transform hover:scale-[1.02]"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating…
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Generate breakdown
-                  </>
-                )}
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={onPickFile}
+                  disabled={parsing || loading}
+                  className="border-primary/30 bg-background/60 text-foreground hover:bg-accent"
+                >
+                  {parsing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Reading…
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload file
+                    </>
+                  )}
+                </Button>
+                <Button
+                  size="lg"
+                  onClick={onGenerate}
+                  disabled={loading || parsing}
+                  className="bg-gradient-primary text-primary-foreground shadow-soft transition-transform hover:scale-[1.02]"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating…
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Generate breakdown
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -163,12 +217,9 @@ function Header() {
 function Hero() {
   return (
     <section className="text-center">
-      <Badge variant="secondary" className="mb-5 bg-accent text-accent-foreground">
-        For product managers who hate copy-paste
-      </Badge>
       <h1 className="font-display text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
-        From <span className="text-primary">messy notes</span> to{" "}
-        <span className="text-primary">shippable tickets</span>
+        <span className="text-primary">Messy notes</span> in.{" "}
+        <span className="text-primary">Polished product docs</span> out.
       </h1>
       <p className="mx-auto mt-5 max-w-2xl text-balance text-base text-muted-foreground sm:text-lg">
         Paste any meeting transcript or notes. Get a PRD summary, user stories, acceptance criteria,
@@ -204,11 +255,29 @@ function Features() {
 }
 
 function LoadingState() {
+  const dots = ["bg-blush", "bg-lavender", "bg-mint", "bg-peach", "bg-primary/70"];
   return (
-    <div className="mt-10 flex flex-col items-center gap-3 rounded-2xl border border-border/60 bg-card/70 p-10 text-center shadow-soft backdrop-blur">
-      <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      <p className="font-medium">Crafting your PM breakdown…</p>
-      <p className="text-sm text-muted-foreground">This usually takes 5–15 seconds.</p>
+    <div className="mt-10 flex flex-col items-center gap-5 rounded-2xl border border-border/60 bg-card/70 p-10 text-center shadow-soft backdrop-blur">
+      <div className="relative flex h-16 w-16 items-center justify-center">
+        <span className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
+        <span className="absolute inset-2 rounded-full bg-gradient-primary opacity-80 blur-md" />
+        <span className="relative flex h-10 w-10 items-center justify-center rounded-full bg-gradient-primary shadow-glow">
+          <Sparkles className="h-5 w-5 text-primary-foreground" />
+        </span>
+      </div>
+      <div className="space-y-1">
+        <p className="font-display text-lg font-semibold">Crafting your PM breakdown…</p>
+        <p className="text-sm text-muted-foreground">Sprinkling some pink magic ✨ — usually 5–15 seconds.</p>
+      </div>
+      <div className="flex items-center gap-2">
+        {dots.map((c, i) => (
+          <span
+            key={i}
+            className={`h-2.5 w-2.5 rounded-full ${c} animate-bounce`}
+            style={{ animationDelay: `${i * 120}ms`, animationDuration: "900ms" }}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -222,16 +291,58 @@ function copy(text: string) {
 
 function Results({ data }: { data: GenerateResult }) {
   const allText = formatAll(data);
+
+  const exportAll = () => {
+    exportPdf("PinkPrint — PM Breakdown", [
+      { heading: "PRD Summary", lines: [data.prd_summary] },
+      {
+        heading: "User Stories",
+        lines: data.user_stories.map((s) => `• ${s.title} — ${s.story}`),
+      },
+      {
+        heading: "Acceptance Criteria",
+        lines: data.acceptance_criteria.map((c) => `• ${c}`),
+      },
+      {
+        heading: "Jira Tickets",
+        lines: data.jira_tickets.flatMap((t) => [
+          `[${t.key}] (${t.type}, ${t.priority}) ${t.summary}`,
+          t.description,
+          "",
+        ]),
+      },
+      {
+        heading: "Recommended Next Steps",
+        lines: data.next_steps.map((s, i) => `${i + 1}. ${s}`),
+      },
+    ], "pinkprint-breakdown.pdf");
+    toast.success("PDF exported");
+  };
+
+  const exportSection = (heading: string, lines: string[], filename: string) => {
+    exportPdf(`PinkPrint — ${heading}`, [{ heading, lines }], filename);
+    toast.success("PDF exported");
+  };
+
   return (
     <Card className="border-border/60 bg-card/85 shadow-glow backdrop-blur">
       <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
         <div>
           <CardTitle className="font-display text-2xl">Your PM breakdown</CardTitle>
-          <CardDescription>Review, copy and paste straight into your tools.</CardDescription>
+          <CardDescription>Review, copy, or export to PDF.</CardDescription>
         </div>
-        <Button variant="outline" size="sm" onClick={() => copy(allText)}>
-          <Copy className="mr-2 h-4 w-4" /> Copy all
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => copy(allText)}>
+            <Copy className="mr-2 h-4 w-4" /> Copy all
+          </Button>
+          <Button
+            size="sm"
+            onClick={exportAll}
+            className="bg-gradient-primary text-primary-foreground shadow-soft"
+          >
+            <Download className="mr-2 h-4 w-4" /> Export PDF
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="prd" className="w-full">
@@ -244,14 +355,25 @@ function Results({ data }: { data: GenerateResult }) {
           </TabsList>
 
           <TabsContent value="prd" className="mt-6">
-            <Section title="PRD Summary" onCopy={() => copy(data.prd_summary)}>
+            <Section
+              title="PRD Summary"
+              onCopy={() => copy(data.prd_summary)}
+              onExport={() => exportSection("PRD Summary", [data.prd_summary], "pinkprint-prd.pdf")}
+            >
               <p className="whitespace-pre-wrap leading-relaxed text-foreground/90">{data.prd_summary}</p>
             </Section>
           </TabsContent>
 
           <TabsContent value="stories" className="mt-6 space-y-3">
             {data.user_stories.map((s, i) => (
-              <Section key={i} title={s.title} onCopy={() => copy(`${s.title}\n${s.story}`)}>
+              <Section
+                key={i}
+                title={s.title}
+                onCopy={() => copy(`${s.title}\n${s.story}`)}
+                onExport={() =>
+                  exportSection(s.title, [s.story], `pinkprint-story-${i + 1}.pdf`)
+                }
+              >
                 <p className="leading-relaxed text-foreground/90">{s.story}</p>
               </Section>
             ))}
@@ -261,6 +383,13 @@ function Results({ data }: { data: GenerateResult }) {
             <Section
               title="Acceptance Criteria"
               onCopy={() => copy(data.acceptance_criteria.map((c) => `• ${c}`).join("\n"))}
+              onExport={() =>
+                exportSection(
+                  "Acceptance Criteria",
+                  data.acceptance_criteria.map((c) => `• ${c}`),
+                  "pinkprint-acceptance-criteria.pdf"
+                )
+              }
             >
               <ul className="space-y-2">
                 {data.acceptance_criteria.map((c, i) => (
@@ -281,6 +410,13 @@ function Results({ data }: { data: GenerateResult }) {
                 onCopy={() =>
                   copy(`[${t.key}] (${t.type}, ${t.priority}) ${t.summary}\n\n${t.description}`)
                 }
+                onExport={() =>
+                  exportSection(
+                    `${t.key} — ${t.summary}`,
+                    [`Type: ${t.type}`, `Priority: ${t.priority}`, "", t.description],
+                    `pinkprint-${t.key.toLowerCase()}.pdf`
+                  )
+                }
               >
                 <div className="mb-3 flex flex-wrap items-center gap-2">
                   <Badge className="bg-primary/15 text-primary hover:bg-primary/20">{t.type}</Badge>
@@ -300,6 +436,13 @@ function Results({ data }: { data: GenerateResult }) {
             <Section
               title="Recommended Next Steps"
               onCopy={() => copy(data.next_steps.map((s, i) => `${i + 1}. ${s}`).join("\n"))}
+              onExport={() =>
+                exportSection(
+                  "Recommended Next Steps",
+                  data.next_steps.map((s, i) => `${i + 1}. ${s}`),
+                  "pinkprint-next-steps.pdf"
+                )
+              }
             >
               <ol className="space-y-2">
                 {data.next_steps.map((s, i) => (
@@ -323,18 +466,25 @@ function Section({
   title,
   children,
   onCopy,
+  onExport,
 }: {
   title: string;
   children: React.ReactNode;
   onCopy: () => void;
+  onExport: () => void;
 }) {
   return (
     <div className="rounded-xl border border-border/60 bg-background/60 p-5">
       <div className="mb-3 flex items-start justify-between gap-3">
         <h3 className="font-display text-lg font-semibold">{title}</h3>
-        <Button variant="ghost" size="sm" onClick={onCopy} className="text-muted-foreground hover:text-foreground">
-          <Copy className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" onClick={onCopy} className="text-muted-foreground hover:text-foreground" title="Copy">
+            <Copy className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={onExport} className="text-muted-foreground hover:text-foreground" title="Export PDF">
+            <Download className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
       {children}
     </div>
