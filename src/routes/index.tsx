@@ -117,8 +117,15 @@ function Index() {
               className="min-h-56 resize-y bg-background/70 text-base leading-relaxed"
               maxLength={20000}
             />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".txt,.md,.csv,.log,.doc,.docx,.pdf,text/plain,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              className="hidden"
+              onChange={onFileChange}
+            />
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 <span>{notes.length.toLocaleString()} / 20,000</span>
                 <span>·</span>
                 <button
@@ -129,24 +136,45 @@ function Index() {
                   Try a sample
                 </button>
               </div>
-              <Button
-                size="lg"
-                onClick={onGenerate}
-                disabled={loading}
-                className="bg-gradient-primary text-primary-foreground shadow-soft transition-transform hover:scale-[1.02]"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating…
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Generate breakdown
-                  </>
-                )}
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={onPickFile}
+                  disabled={parsing || loading}
+                  className="border-primary/30 bg-background/60 text-foreground hover:bg-accent"
+                >
+                  {parsing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Reading…
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload file
+                    </>
+                  )}
+                </Button>
+                <Button
+                  size="lg"
+                  onClick={onGenerate}
+                  disabled={loading || parsing}
+                  className="bg-gradient-primary text-primary-foreground shadow-soft transition-transform hover:scale-[1.02]"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating…
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Generate breakdown
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -189,12 +217,9 @@ function Header() {
 function Hero() {
   return (
     <section className="text-center">
-      <Badge variant="secondary" className="mb-5 bg-accent text-accent-foreground">
-        For product managers who hate copy-paste
-      </Badge>
       <h1 className="font-display text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
-        From <span className="text-primary">messy notes</span> to{" "}
-        <span className="text-primary">shippable tickets</span>
+        <span className="text-primary">Messy notes</span> in.{" "}
+        <span className="text-primary">Polished product docs</span> out.
       </h1>
       <p className="mx-auto mt-5 max-w-2xl text-balance text-base text-muted-foreground sm:text-lg">
         Paste any meeting transcript or notes. Get a PRD summary, user stories, acceptance criteria,
