@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff1f6"/>
+      <stop offset="100%" stop-color="#fce7f3"/>
+    </linearGradient>
+    <linearGradient id="pink" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f9a8d4"/>
+      <stop offset="100%" stop-color="#ec4899"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Soft blobs -->
+  <circle cx="150" cy="150" r="200" fill="#f9a8d4" opacity="0.18"/>
+  <circle cx="1080" cy="500" r="240" fill="#c084fc" opacity="0.12"/>
+  <circle cx="900" cy="100" r="160" fill="#ec4899" opacity="0.10"/>
+
+  <!-- Logo circle -->
+  <circle cx="142" cy="315" r="54" fill="url(#pink)" filter="url(#glow)" opacity="0.9"/>
+  <path d="M142 337s-22-13.5-22-27a12.2 12.2 0 0 1 22-7.4 12.2 12.2 0 0 1 22 7.4c0 13.5-22 27-22 27z" fill="white"/>
+
+  <!-- App name -->
+  <text x="216" y="297" font-family="Georgia, serif" font-size="62" font-weight="700" fill="#1a0a12" letter-spacing="-1">PinkPrint</text>
+  <text x="216" y="340" font-family="Arial, sans-serif" font-size="24" fill="#be185d" letter-spacing="1">AI PM DOCUMENTATION GENERATOR</text>
+
+  <!-- Divider -->
+  <rect x="142" y="378" width="916" height="2" rx="1" fill="#f9a8d4" opacity="0.6"/>
+
+  <!-- Tagline -->
+  <text x="600" y="440" font-family="Georgia, serif" font-size="40" font-weight="600" fill="#1a0a12" text-anchor="middle">Messy notes in. Polished product docs out.</text>
+
+  <!-- Feature pills -->
+  <g font-family="Arial, sans-serif" font-size="20" fill="#be185d">
+    <!-- PRD Summary -->
+    <rect x="142" y="488" width="178" height="44" rx="22" fill="#fce7f3" stroke="#f9a8d4" stroke-width="1.5"/>
+    <text x="231" y="516" text-anchor="middle">PRD Summary</text>
+    <!-- User Stories -->
+    <rect x="334" y="488" width="172" height="44" rx="22" fill="#fce7f3" stroke="#f9a8d4" stroke-width="1.5"/>
+    <text x="420" y="516" text-anchor="middle">User Stories</text>
+    <!-- Acceptance -->
+    <rect x="520" y="488" width="210" height="44" rx="22" fill="#fce7f3" stroke="#f9a8d4" stroke-width="1.5"/>
+    <text x="625" y="516" text-anchor="middle">Acceptance Criteria</text>
+    <!-- Jira -->
+    <rect x="744" y="488" width="148" height="44" rx="22" fill="#fce7f3" stroke="#f9a8d4" stroke-width="1.5"/>
+    <text x="818" y="516" text-anchor="middle">Jira Tickets</text>
+    <!-- Next Steps -->
+    <rect x="906" y="488" width="152" height="44" rx="22" fill="#fce7f3" stroke="#f9a8d4" stroke-width="1.5"/>
+    <text x="982" y="516" text-anchor="middle">Next Steps</text>
+  </g>
+</svg>
