@@ -1,6 +1,3 @@
-// Browser-side Gemini client. The key comes from VITE_GEMINI_API_KEY (build-time)
-// or from a value the user pastes into the UI (stored in localStorage).
-
 import { z } from "zod";
 
 const ResultSchema = z.object({
@@ -22,24 +19,6 @@ const ResultSchema = z.object({
 
 export type GenerateResult = z.infer<typeof ResultSchema>;
 
-const STORAGE_KEY = "pinkprint.gemini.apiKey";
-
-export function getStoredKey(): string {
-  if (typeof window === "undefined") return "";
-  return localStorage.getItem(STORAGE_KEY) || "";
-}
-
-export function setStoredKey(key: string) {
-  if (typeof window === "undefined") return;
-  if (key) localStorage.setItem(STORAGE_KEY, key);
-  else localStorage.removeItem(STORAGE_KEY);
-}
-
-export function getApiKey(): string {
-  const fromEnv = (import.meta.env.VITE_GEMINI_API_KEY as string | undefined) || "";
-  return fromEnv || getStoredKey();
-}
-
 const SYSTEM_PROMPT = `You are an experienced senior product manager. Read the user's raw meeting notes or transcript and produce a crisp, professional product breakdown. Be concrete, avoid filler, and infer reasonable specifics when the notes are vague. Respond ONLY with a valid JSON object matching the requested schema. No prose, no markdown fences.`;
 
 const SCHEMA_HINT = `{
@@ -55,9 +34,9 @@ export async function generateBreakdown(notes: string): Promise<GenerateResult> 
   if (trimmed.length < 20) throw new Error("Please provide at least 20 characters of notes.");
   if (trimmed.length > 20000) throw new Error("Notes are too long (max 20,000 characters).");
 
-  const apiKey = getApiKey();
+  const apiKey = (import.meta.env.VITE_GEMINI_API_KEY as string | undefined) || "";
   if (!apiKey) {
-    throw new Error("Missing Gemini API key. Add it in Settings.");
+    throw new Error("App configuration error. Please contact support.");
   }
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
@@ -85,7 +64,7 @@ export async function generateBreakdown(notes: string): Promise<GenerateResult> 
   });
 
   if (res.status === 401 || res.status === 403) {
-    throw new Error("Invalid Gemini API key. Please check it in Settings.");
+    throw new Error("App configuration error. Please contact support.");
   }
   if (res.status === 429) {
     throw new Error("Gemini rate limit reached. Try again in a moment.");
@@ -105,7 +84,6 @@ export async function generateBreakdown(notes: string): Promise<GenerateResult> 
   try {
     parsed = JSON.parse(text);
   } catch {
-    // Try to recover from accidental markdown fences
     const cleaned = text.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
     parsed = JSON.parse(cleaned);
   }

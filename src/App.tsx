@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import {
   Sparkles,
   FileText,
@@ -12,29 +12,14 @@ import {
   Heart,
   Upload,
   Download,
-  KeyRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { toast, Toaster } from "sonner";
-import {
-  generateBreakdown,
-  getStoredKey,
-  setStoredKey,
-  type GenerateResult,
-} from "@/lib/gemini";
+import { generateBreakdown, type GenerateResult } from "@/lib/gemini";
 import { parseFile } from "@/lib/file-parse";
 import { exportPdf } from "@/lib/pdf-export";
 
@@ -51,15 +36,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [parsing, setParsing] = useState(false);
   const [result, setResult] = useState<GenerateResult | null>(null);
-  const [keyOpen, setKeyOpen] = useState(false);
-  const [keyInput, setKeyInput] = useState("");
-  const [hasKey, setHasKey] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const envKey = (import.meta.env.VITE_GEMINI_API_KEY as string | undefined) || "";
-    setHasKey(Boolean(envKey || getStoredKey()));
-  }, []);
 
   const onPickFile = () => fileInputRef.current?.click();
 
@@ -83,26 +60,9 @@ export default function App() {
     }
   };
 
-  const openKeyDialog = () => {
-    setKeyInput(getStoredKey());
-    setKeyOpen(true);
-  };
-
-  const saveKey = () => {
-    setStoredKey(keyInput.trim());
-    setHasKey(Boolean(keyInput.trim()) || Boolean(import.meta.env.VITE_GEMINI_API_KEY));
-    setKeyOpen(false);
-    toast.success(keyInput.trim() ? "API key saved" : "API key cleared");
-  };
-
   const onGenerate = async () => {
     if (notes.trim().length < 20) {
       toast.error("Please paste at least 20 characters of notes.");
-      return;
-    }
-    if (!hasKey) {
-      toast.error("Add your Gemini API key first.");
-      openKeyDialog();
       return;
     }
     setLoading(true);
@@ -125,7 +85,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-hero">
       <Toaster position="top-center" richColors />
-      <Header onOpenKey={openKeyDialog} hasKey={hasKey} />
+      <Header />
 
       <main className="mx-auto max-w-5xl px-5 pb-24 pt-10 sm:pt-16">
         <Hero />
@@ -222,46 +182,11 @@ export default function App() {
       </main>
 
       <Footer />
-
-      <Dialog open={keyOpen} onOpenChange={setKeyOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Gemini API key</DialogTitle>
-            <DialogDescription>
-              Stored only in your browser (localStorage). Get a key at{" "}
-              <a
-                href="https://aistudio.google.com/app/apikey"
-                target="_blank"
-                rel="noreferrer"
-                className="text-primary underline"
-              >
-                aistudio.google.com
-              </a>
-              .
-            </DialogDescription>
-          </DialogHeader>
-          <Input
-            type="password"
-            value={keyInput}
-            onChange={(e) => setKeyInput(e.target.value)}
-            placeholder="AIza..."
-            autoFocus
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setKeyOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={saveKey} className="bg-gradient-primary text-primary-foreground">
-              Save
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
 
-function Header({ onOpenKey, hasKey }: { onOpenKey: () => void; hasKey: boolean }) {
+function Header() {
   return (
     <header className="mx-auto flex max-w-5xl items-center justify-between px-5 pt-6">
       <div className="flex items-center gap-2">
@@ -273,15 +198,9 @@ function Header({ onOpenKey, hasKey }: { onOpenKey: () => void; hasKey: boolean 
           <div className="text-xs text-muted-foreground">AI PM Documentation Generator</div>
         </div>
       </div>
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" onClick={onOpenKey} className="text-muted-foreground">
-          <KeyRound className="mr-1.5 h-4 w-4" />
-          {hasKey ? "API key" : "Add key"}
-        </Button>
-        <Badge variant="secondary" className="hidden bg-accent text-accent-foreground sm:inline-flex">
-          <Sparkles className="mr-1 h-3 w-3" /> Gemini
-        </Badge>
-      </div>
+      <Badge variant="secondary" className="bg-accent text-accent-foreground">
+        <Sparkles className="mr-1 h-3 w-3" /> Gemini
+      </Badge>
     </header>
   );
 }
