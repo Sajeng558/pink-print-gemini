@@ -210,7 +210,7 @@ function Hero() {
     <section className="text-center">
       <h1 className="font-display text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
         <span className="text-primary">Messy notes</span> in.{" "}
-        <span className="text-primary">Product-ready docs</span> out.
+        <span className="text-primary">Polished product docs</span> out.
       </h1>
       <p className="mx-auto mt-5 max-w-2xl text-balance text-base text-muted-foreground sm:text-lg">
         Paste any meeting transcript or notes. Get a PRD summary, user stories, acceptance criteria,
