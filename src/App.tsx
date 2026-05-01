@@ -214,7 +214,7 @@ function Hero() {
       </h1>
       <p className="mx-auto mt-5 max-w-2xl text-balance text-base text-muted-foreground sm:text-lg">
         Paste any meeting transcript or notes. Get a PRD summary, user stories, acceptance criteria,
-        Jira tickets and recommended next steps — instantly.
+        Jira tickets and recommended next steps - instantly.
       </p>
     </section>
   );
@@ -258,7 +258,7 @@ function LoadingState() {
       </div>
       <div className="space-y-1">
         <p className="font-display text-lg font-semibold">Crafting your PM breakdown…</p>
-        <p className="text-sm text-muted-foreground">Sprinkling some pink magic ✨ — usually 5–15 seconds.</p>
+        <p className="text-sm text-muted-foreground">Sprinkling some pink magic ✨ - usually 5–15 seconds.</p>
       </div>
       <div className="flex items-center gap-2">
         {dots.map((c, i) => (
@@ -285,12 +285,12 @@ function Results({ data }: { data: GenerateResult }) {
 
   const exportAll = () => {
     exportPdf(
-      "PinkPrint — PM Breakdown",
+      "PinkPrint - PM Breakdown",
       [
         { heading: "PRD Summary", lines: [data.prd_summary] },
         {
           heading: "User Stories",
-          lines: data.user_stories.map((s) => `• ${s.title} — ${s.story}`),
+          lines: data.user_stories.map((s) => `• ${s.title} - ${s.story}`),
         },
         {
           heading: "Acceptance Criteria",
@@ -315,7 +315,7 @@ function Results({ data }: { data: GenerateResult }) {
   };
 
   const exportSection = (heading: string, lines: string[], filename: string) => {
-    exportPdf(`PinkPrint — ${heading}`, [{ heading, lines }], filename);
+    exportPdf(`PinkPrint - ${heading}`, [{ heading, lines }], filename);
     toast.success("PDF exported");
   };
 
@@ -407,7 +407,7 @@ function Results({ data }: { data: GenerateResult }) {
                 }
                 onExport={() =>
                   exportSection(
-                    `${t.key} — ${t.summary}`,
+                    `${t.key} - ${t.summary}`,
                     [`Type: ${t.type}`, `Priority: ${t.priority}`, "", t.description],
                     `pinkprint-${t.key.toLowerCase()}.pdf`,
                   )
