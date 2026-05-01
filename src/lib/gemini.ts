@@ -19,76 +19,24 @@ const ResultSchema = z.object({
 
 export type GenerateResult = z.infer<typeof ResultSchema>;
 
-const SYSTEM_PROMPT = `You are an experienced senior product manager. Read the user's raw meeting notes or transcript and produce a crisp, professional product breakdown. Be concrete, avoid filler, and infer reasonable specifics when the notes are vague. Respond ONLY with a valid JSON object matching the requested schema. No prose, no markdown fences.`;
-
-const SCHEMA_HINT = `{
-  "prd_summary": "4-8 sentence PRD summary covering problem, users, goals, proposed solution",
-  "user_stories": [{"title": "string", "story": "As a <persona>, I want <capability>, so that <benefit>."}],
-  "acceptance_criteria": ["Given/When/Then or clear bullet criteria", "..."],
-  "jira_tickets": [{"key": "PM-101", "type": "Story|Task|Bug|Epic|Spike", "summary": "string", "description": "string", "priority": "Low|Medium|High|Critical", "labels": ["string"]}],
-  "next_steps": ["string", "..."]
-}`;
-
 export async function generateBreakdown(notes: string): Promise<GenerateResult> {
   const trimmed = notes.trim();
   if (trimmed.length < 20) throw new Error("Please provide at least 20 characters of notes.");
   if (trimmed.length > 20000) throw new Error("Notes are too long (max 20,000 characters).");
 
-  const apiKey = (import.meta.env.VITE_GEMINI_API_KEY as string | undefined) || "";
-  if (!apiKey) {
-    throw new Error("App configuration error. Please contact support.");
-  }
-
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
-
-  const res = await fetch(url, {
+  const res = await fetch("/api/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      systemInstruction: { role: "system", parts: [{ text: SYSTEM_PROMPT }] },
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              text: `Here are the meeting notes / transcript:\n\n"""${trimmed}"""\n\nReturn ONLY a JSON object with this shape:\n${SCHEMA_HINT}`,
-            },
-          ],
-        },
-      ],
-      generationConfig: {
-        responseMimeType: "application/json",
-        temperature: 0.6,
-      },
-    }),
+    body: JSON.stringify({ notes: trimmed }),
   });
 
-  if (res.status === 401 || res.status === 403) {
-    throw new Error("App configuration error. Please contact support.");
-  }
-  if (res.status === 429) {
-    throw new Error("Gemini rate limit reached. Try again in a moment.");
-  }
+  const json = await res.json().catch(() => null);
+
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    console.error("Gemini error", res.status, text);
-    throw new Error("Gemini request failed. Please try again.");
+    throw new Error(json?.error || "Request failed. Please try again.");
   }
 
-  const json = await res.json();
-  const text: string =
-    json?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text || "").join("") || "";
-  if (!text) throw new Error("Gemini returned an empty response.");
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(text);
-  } catch {
-    const cleaned = text.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
-    parsed = JSON.parse(cleaned);
-  }
-
-  const result = ResultSchema.safeParse(parsed);
+  const result = ResultSchema.safeParse(json);
   if (!result.success) {
     console.error("Schema parse failed", result.error);
     throw new Error("Gemini response did not match the expected format.");
